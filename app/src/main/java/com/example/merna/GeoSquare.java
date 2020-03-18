@@ -9,14 +9,16 @@ public class GeoSquare {
     private static final String TAG = "GeoSquare";
     private double northWestLat, northEastLat, southEastLat, southWestLat;
     private double northWestLng, northEastLng, southEastLng, southWestLng;
-    private LatLng latLng , northWest  , northEast,southEast,southWest;
+    //private LatLng latLng , northWest  , northEast,southEast,southWest;
+
+    public GeoSquare(){}
 
     public GeoSquare(LatLng latLng) {
-        this.latLng = latLng;
-        setAll();
+
+        setAll(latLng);
     }
 
-    private void setAll() {
+    private void setAll(LatLng latLng) {
         double lat = latLng.latitude;
         double lng = latLng.longitude;
         Log.e(TAG, "setAll: "+ lat + " " + lng +"\n");
@@ -24,22 +26,22 @@ public class GeoSquare {
         // north west
         northWestLat = lat +  0.0003;
         northWestLng = lng - 0.0003;
-         northWest= new LatLng(northWestLat,northWestLng);
+        // northWest= new LatLng(northWestLat,northWestLng);
         // north East
         northEastLat =lat +  0.0003;
         northEastLng = lng +  0.0003;;
-         northEast= new LatLng(northEastLat,northEastLng);
+         //northEast= new LatLng(northEastLat,northEastLng);
 
         //south east
 
         southEastLat =lat-  0.0003;
         southEastLng = lng +  0.0003;;
-         southEast= new LatLng(southEastLat,southEastLng);
+         //southEast= new LatLng(southEastLat,southEastLng);
 
         // south west
         southWestLat = lat -  0.0003;
         southWestLng =lng - 0.0003;
-         southWest= new LatLng(southWestLat,southWestLng);
+         //southWest= new LatLng(southWestLat,southWestLng);
 
     }
 
@@ -48,21 +50,6 @@ public class GeoSquare {
         return northWestLat;
     }
 
-    public LatLng getNorthWest() {
-        return northWest;
-    }
-
-    public LatLng getNorthEast() {
-        return northEast;
-    }
-
-    public LatLng getSouthEast() {
-        return southEast;
-    }
-
-    public LatLng getSouthWest() {
-        return southWest;
-    }
 
     public double getNorthEastLat() {
         return northEastLat;

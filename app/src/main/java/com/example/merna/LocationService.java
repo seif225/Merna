@@ -80,10 +80,15 @@ public class LocationService extends Service {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.hasChild("houseFence")) {
+                    Log.e(TAG, "onDataChange: "+"got house fence in service " );
                     houseFence = dataSnapshot.child("houseFence").getValue(GeoSquare.class);
+                    Log.e(TAG, "onDataChange: " + houseFence.getNorthEastLat() );
                 }
                 else {
+                    Log.e(TAG, "onDataChange: "+"didn't get a house fence" );
+
                     Toast.makeText(LocationService.this, "you need to add your house fence first ^^ ", Toast.LENGTH_SHORT).show();
+                    stopSelf();
                 }
             }
 
@@ -92,6 +97,7 @@ public class LocationService extends Service {
 
             }
         });
+
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
                 0, notificationIntent, 0);
@@ -138,9 +144,11 @@ public class LocationService extends Service {
                     public void onLocationResult(LocationResult locationResult) {
 
                         Location location = locationResult.getLastLocation();
+                        Log.e(TAG, "onLocationResult: Location: " + location.getLatitude() + " " + location.getLongitude() );
 
-                        if (square != null) {
+                        if (houseFence != null) {
                             if (isInSquare(location, houseFence)) {
+                                Log.e(TAG, "onLocationResult: " + " looks like you are in the house ^^" );
                                 if (!inDaHouse) {
                                     notifyUserWelcomeHome();
                                     inDaHouse = true;
@@ -185,6 +193,10 @@ public class LocationService extends Service {
                                 }
                             }
                         }
+
+                        else {
+                            Log.e(TAG, "onLocationResult: lel asf HouseFence = " +houseFence );
+                        }
                     }
                 }
                 , Looper.myLooper()); // Looper.myLooper tells this to repeat forever until thread is destroyed
@@ -204,7 +216,7 @@ public class LocationService extends Service {
                 .setColor(Color.YELLOW)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        notificationManager.notify(1, notification.build());
+        notificationManager.notify(2, notification.build());
 
 
     }
@@ -221,7 +233,7 @@ public class LocationService extends Service {
                 .setColor(Color.YELLOW)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        notificationManager.notify(1, notification.build());
+        notificationManager.notify(2, notification.build());
 
 
     }

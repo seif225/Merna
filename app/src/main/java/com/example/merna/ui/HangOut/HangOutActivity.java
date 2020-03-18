@@ -83,18 +83,26 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         ButterKnife.bind(this);
         getPlaces(this);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-        Task<Location> task = fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
-            @Override
-            public void onComplete(@NonNull Task<Location> task) {
-                if (task.isSuccessful()) {
-                    GeoSquare geoSquare = new GeoSquare(new LatLng(task.getResult().getLatitude(), task.getResult().getLongitude()));
-                    FirebaseDatabase.getInstance().getReference().child("houseFence").setValue(geoSquare);
-                    Toast.makeText(HangOutActivity.this, "house fence has been added successfully", Toast.LENGTH_SHORT).show();
-                    Intent serviceIntent = new Intent(HangOutActivity.this, LocationService.class);
-                    ContextCompat.startForegroundService(HangOutActivity.this, serviceIntent);
-                }
-            }
-        });
+       addHouseFence.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View v) {
+
+
+               Task<Location> task = fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+                   @Override
+                   public void onComplete(@NonNull Task<Location> task) {
+                       if (task.isSuccessful()) {
+                           GeoSquare geoSquare = new GeoSquare(new LatLng(task.getResult().getLatitude(), task.getResult().getLongitude()));
+                           FirebaseDatabase.getInstance().getReference().child("houseFence").setValue(geoSquare);
+                           Toast.makeText(HangOutActivity.this, "house fence has been added successfully", Toast.LENGTH_SHORT).show();
+                           Intent serviceIntent = new Intent(HangOutActivity.this, LocationService.class);
+                           ContextCompat.startForegroundService(HangOutActivity.this, serviceIntent);
+                       }
+                   }
+               });
+
+           }
+       });
 
 
         addPics.setOnClickListener(new View.OnClickListener() {
