@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Merna</string>
+    <string name="title_home">Home</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="api_key">AIzaSyA8eHeCpOQhwEdumIHnDOBk5Hh4mTlopDk</string>
+    <string name="imagepicker_multiselect_done">Done</string>
+    <string name="imagepicker_multiselect_not_enough_singular">You have to select 1 more image</string>
+    <string name="imagepicker_multiselect_not_enough_plural">You have to select %d more images</string>
+    <string name="imagepicker_multiselect_enough_singular">You have selected 1 image</string>
+    <string name="imagepicker_multiselect_enough_plural">You have selected %d images</string>
+    <string name="imagepicker_multiselect_overselect">You cannot select more than %d images</string>
+    <string name="imagepicker_no_image_text_view">There are no image in your device.</string>
+</resources>

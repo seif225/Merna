@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "558525194373",
+    "firebase_url": "https://merna-1d1d5.firebaseio.com",
+    "project_id": "merna-1d1d5",
+    "storage_bucket": "merna-1d1d5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:558525194373:android:14f0c72361443533ef89ec",
+        "android_client_info": {
+          "package_name": "com.example.merna"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "558525194373-20kfj08aqe4kjqfe3219kopj7u7vti6n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp5LbnmxhG5fSIMwx-EGu-MOyvS_ttpj8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "558525194373-20kfj08aqe4kjqfe3219kopj7u7vti6n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
