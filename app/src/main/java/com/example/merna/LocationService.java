@@ -40,6 +40,7 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
@@ -76,27 +77,27 @@ public class LocationService extends Service {
         notificationManager = NotificationManagerCompat.from(this);
         createNotificationChannel();
         createNotificationChannelForPlaces();
-        FirebaseDatabase.getInstance().getReference().addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.hasChild("houseFence")) {
-                    Log.e(TAG, "onDataChange: "+"got house fence in service " );
-                    houseFence = dataSnapshot.child("houseFence").getValue(GeoSquare.class);
-                    Log.e(TAG, "onDataChange: " + houseFence.getNorthEastLat() );
-                }
-                else {
-                    Log.e(TAG, "onDataChange: "+"didn't get a house fence" );
+        FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.hasChild("houseFence")) {
+                            Log.e(TAG, "onDataChange: " + "got house fence in service ");
+                            houseFence = dataSnapshot.child("houseFence").getValue(GeoSquare.class);
+                            Log.e(TAG, "onDataChange: " + houseFence.getNorthEastLat());
+                        } else {
+                            Log.e(TAG, "onDataChange: " + "didn't get a house fence");
 
-                    Toast.makeText(LocationService.this, "you need to add your house fence first ^^ ", Toast.LENGTH_SHORT).show();
-                    stopSelf();
-                }
-            }
+                            Toast.makeText(LocationService.this, "you need to add your house fence first ^^ ", Toast.LENGTH_SHORT).show();
+                            stopSelf();
+                        }
+                    }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
 
-            }
-        });
+                    }
+                });
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
@@ -132,74 +133,81 @@ public class LocationService extends Service {
 
         //---LocationUpdates--
 
+
         LocationRequest mLocationRequestHighAccuracy = new LocationRequest();
         mLocationRequestHighAccuracy.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         mLocationRequestHighAccuracy.setInterval(UPDATE_INTERVAL);
         mLocationRequestHighAccuracy.setFastestInterval(FASTEST_INTERVAL);
 
 
-        FirebaseDatabase.getInstance().getReference().child("test").setValue(UUID.randomUUID());
         mFusedLocationClient.requestLocationUpdates(mLocationRequestHighAccuracy, new LocationCallback() {
                     @Override
                     public void onLocationResult(LocationResult locationResult) {
 
-                        Location location = locationResult.getLastLocation();
-                        Log.e(TAG, "onLocationResult: Location: " + location.getLatitude() + " " + location.getLongitude() );
 
-                        if (houseFence != null) {
-                            if (isInSquare(location, houseFence)) {
-                                Log.e(TAG, "onLocationResult: " + " looks like you are in the house ^^" );
-                                if (!inDaHouse) {
-                                    notifyUserWelcomeHome();
-                                    inDaHouse = true;
+                        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                            Location location = locationResult.getLastLocation();
+                            Log.e(TAG, "onLocationResult: Location: " + location.getLatitude() + " " + location.getLongitude());
+
+                            if (houseFence != null) {
+                                if (isInSquare(location, houseFence)) {
+                                    Log.e(TAG, "onLocationResult: " + " looks like you are in the house ^^");
+                                    if (!inDaHouse) {
+                                        notifyUserWelcomeHome();
+                                        inDaHouse = true;
+                                    }
+                                } else {
+                                    inDaHouse = false;
+                                    if (count == 0) {
+                                        Log.e(TAG, "onLocationResult:count should be zero =  " + count);
+                                        square = new GeoSquare(new LatLng(location.getLatitude(), location.getLongitude()));
+                                    }
+
+                                    if (count >= 15) {
+                                        if (isSettled()) {
+                                            Log.e(TAG, "onLocationResult: d5lna fe el if bta3t isSettled elhamdullah ");
+                                            if (!isInLocation) {
+                                                notifyUser(location, LocationService.this);
+                                                isInLocation = true;
+                                            }
+                                        } else {
+                                            checks = new boolean[15];
+                                            Log.e(TAG, "onLocationResult: " + count + " " + checks[count]);
+                                        }
+                                        count = 0;
+                                    }
+
+
+                                    boolean temp = isInSquare(location, square);
+                                    Log.e(TAG, "inSquare?: " + count + " " + temp);
+                                    checks[count] = temp;
+
+
+                                    Log.e(TAG, "onLocationResult: got location result.");
+                                    FirebaseDatabase.getInstance().getReference().child("Users")
+                                            .child(FirebaseAuth.getInstance().getUid())
+                                            .child("currentLocation").setValue(location);
+                                    count++;
+
+                                    if (!checks[count - 1]) {
+                                        count = 0;
+                                        if (isInLocation) {
+                                            isInLocation = false;
+                                            NotifyUserIsLeaving();
+                                        }
+                                    }
                                 }
                             } else {
-                                inDaHouse = false;
-                                if (count == 0) {
-                                    Log.e(TAG, "onLocationResult:count should be zero =  " + count);
-                                    square = new GeoSquare(new LatLng(location.getLatitude(), location.getLongitude()));
-                                }
-
-                                if (count >= 15) {
-                                    if (isSettled()) {
-                                        Log.e(TAG, "onLocationResult: d5lna fe el if bta3t isSettled elhamdullah ");
-                                        if (!isInLocation) {
-                                            notifyUser(location, LocationService.this);
-                                            isInLocation = true;
-                                        }
-                                    } else {
-                                        checks = new boolean[15];
-                                        Log.e(TAG, "onLocationResult: " + count + " " + checks[count]);
-                                    }
-                                    count = 0;
-                                }
-
-
-                                boolean temp = isInSquare(location, square);
-                                Log.e(TAG, "inSquare?: " + count + " " + temp);
-                                checks[count] = temp;
-
-
-                                Log.e(TAG, "onLocationResult: got location result.");
-                                FirebaseDatabase.getInstance().getReference().child("currentLocation").setValue(location);
-                                count++;
-
-                                if (!checks[count - 1]) {
-                                    count = 0;
-                                    if (isInLocation) {
-                                        isInLocation = false;
-                                        NotifyUserIsLeaving();
-                                    }
-                                }
+                                Log.e(TAG, "onLocationResult: lel asf HouseFence = " + houseFence);
                             }
-                        }
-
-                        else {
-                            Log.e(TAG, "onLocationResult: lel asf HouseFence = " +houseFence );
+                        } else {
+                            stopSelf();
                         }
                     }
+
                 }
                 , Looper.myLooper()); // Looper.myLooper tells this to repeat forever until thread is destroyed
+
 
     }
 
@@ -233,7 +241,7 @@ public class LocationService extends Service {
                 .setColor(Color.YELLOW)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-        notificationManager.notify(2, notification.build());
+        notificationManager.notify(3, notification.build());
 
 
     }
@@ -272,7 +280,8 @@ public class LocationService extends Service {
                         FindCurrentPlaceResponse response = task.getResult();
                         if (response.getPlaceLikelihoods().size() >= 1) {
 
-                            FirebaseDatabase.getInstance().getReference().child("currentLocation").setValue(location);
+                            FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getUid())
+                                    .child("currentLocation").setValue(location);
 
                             Intent i = new Intent(LocationService.this, HangOutActivity.class);
                             Intent[] intents = {i};
@@ -288,12 +297,14 @@ public class LocationService extends Service {
                                     .setColor(Color.YELLOW)
                                     .setPriority(NotificationCompat.PRIORITY_HIGH);
 
-                            notificationManager.notify(1, notification.build());
+                            notificationManager.notify(4, notification.build());
 
 
                             Date currentTime = Calendar.getInstance().getTime();
-                            FirebaseDatabase.getInstance().getReference().child("place").setValue(response);
-                            FirebaseDatabase.getInstance().getReference().child("placeTime").setValue(currentTime);
+                            FirebaseDatabase.getInstance().getReference().child("Users").
+                                    child(FirebaseAuth.getInstance().getUid()).child("place").setValue(response);
+                            FirebaseDatabase.getInstance().getReference().child("Users")
+                                    .child(FirebaseAuth.getInstance().getUid()).child("placeTime").setValue(currentTime);
 
 
                         }

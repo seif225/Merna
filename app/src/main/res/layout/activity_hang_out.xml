@@ -17,14 +17,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/album_name_et"
+<!--
+    <DatePicker
+        android:id="@+id/datePicker1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:calendarViewShown="false"
+        android:datePickerMode="spinner"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/address_et" />-->
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/album_name_et_container"
+        style="style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        app:layout_constraintTop_toBottomOf="@id/album_name_tv" />
+        android:hint="album name"
+        app:errorEnabled="true"
+        app:layout_constraintTop_toBottomOf="@id/album_name_tv">
 
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/album_name_et"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
+    </com.google.android.material.textfield.TextInputLayout>
 
 
     <TextView
@@ -36,7 +55,7 @@
         android:textColor="#000000"
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/album_name_et" />
+        app:layout_constraintTop_toBottomOf="@+id/album_name_et_container" />
 
     <EditText
         android:id="@+id/place_name_et"
@@ -67,27 +86,42 @@
         android:id="@+id/add_pics"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="add pics"
         android:layout_margin="8dp"
+        android:background="@drawable/custom_outlines_button"
+        android:elevation="16dp"
+        android:text="add pics"
+        android:textColor="@color/colorAccent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/address_et" />
+
+    <Button
+        android:id="@+id/pick_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:background="@drawable/custom_outlines_button"
+        android:elevation="16dp"
+        android:text="pick date"
+        android:textColor="@color/colorAccent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/add_pics" />
 
     <Button
         android:id="@+id/pick_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="pick location"
         android:layout_margin="8dp"
+        android:text="pick location"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/add_pics" />
+        app:layout_constraintTop_toBottomOf="@id/pick_date" />
 
 
     <Button
         android:id="@+id/done"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="done"
         android:layout_margin="8dp"
+        android:text="done"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/pick_location" />
 

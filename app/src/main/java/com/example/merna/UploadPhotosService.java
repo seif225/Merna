@@ -6,10 +6,11 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,11 +18,16 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.UploadTask;
 
-import static com.example.merna.App.CHANNEL_ID;
+import java.util.ArrayList;
+import java.util.UUID;
 
 public class UploadPhotosService extends Service {
     private static final String TAG = "UploadPhotosService";
@@ -56,7 +62,7 @@ public class UploadPhotosService extends Service {
     }
 
 
-    public void uploadParcelable(HangOutModel model) {
+    public void uploadParcelable(ParcelableHangOutModel model) {
         final int progressMax = model.getListOfPics().size();
 
         final NotificationCompat.Builder notification = new NotificationCompat.Builder(this, CHANNEL_ID_1)
@@ -68,44 +74,80 @@ public class UploadPhotosService extends Service {
                 .setOnlyAlertOnce(true)
                 .setProgress(progressMax, 0, false);
 
-        notificationManager.notify(2, notification.build());
+        notificationManager.notify(5, notification.build());
 
-        /*new Thread(new Runnable() {
-            @Override
-            public void run() {
-                SystemClock.sleep(2000);
-                for (int progress = 0; progress <= progressMax; progress += 20) {
-                    notification.setProgress(progressMax, progress, false);
-                    notificationManager.notify(2, notification.build());
-                    SystemClock.sleep(1000);
-                }
-                stopSelf();
-                notification.setContentText("Upload finished")
-                        .setProgress(0, 0, false)
-                        .setOngoing(false);
-                notificationManager.notify(2, notification.build());
-            }
-        }).start();*/
+        Log.e(TAG, "uploadParcelable: " + "\n \n \n \n ");
         Log.e(TAG, "uploadParcelable:size " + progressMax);
+        Log.e(TAG, "uploadParcelable: " + model.getPlaceName());
+        Log.e(TAG, "uploadParcelable: " + model.getDate());
+        Log.e(TAG, "uploadParcelable: " + model.getAddress());
+        Log.e(TAG, "uploadParcelable: " + model.getAlbumName());
+        Log.e(TAG, "uploadParcelable: " + model.getRegisteredName());
+        Log.e(TAG, "uploadParcelable: " + model.getUnixTime());
+        Log.e(TAG, "uploadParcelable: " + "\n \n \n \n ");
+        HangOutModel hangOutModel = new HangOutModel();
+        ArrayList<String> listOfPics = new ArrayList<>();
+
         for (int i = 0; i < model.getListOfPics().size(); i++) {
             Log.e(TAG, "uploadParcelable:i " + i);
-            FirebaseStorage.getInstance().getReference().child(i + "").putFile(model.getListOfPics().get(i)).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                    if (task.isSuccessful()) {
-                        sucCount++;
-                        Log.e(TAG, "onComplete:succount  " + sucCount);
-                        notification.setProgress(progressMax, sucCount, false);
-                        notification.setContentText("Upload in progress " + "(" + sucCount + "/" + model.getListOfPics().size() + ").");
-                        notificationManager.notify(2, notification.build());
-                        if (sucCount == progressMax) {
-                            stopSelf();
-                            notification.setContentText("Upload finished")
-                                    .setProgress(0, 0, false)
-                                    .setOngoing(false);
-                            notificationManager.notify(2, notification.build());
+            String photoName = UUID.randomUUID() + ".jpg";
+            FirebaseStorage.getInstance().getReference().child(FirebaseAuth.getInstance().getUid())
+                    .child(model.getRegisteredName())
+                    .child(photoName).putFile(model.getListOfPics().get(i))
+                    .addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                            if (task.isSuccessful()) {
+                                sucCount++;
+                                Log.e(TAG, "onComplete:succount  " + sucCount);
+                                notification.setProgress(progressMax, sucCount, false);
+                                notification.setContentText("Upload in progress " + "(" + sucCount + "/" + model.getListOfPics().size() + ").");
+                                notificationManager.notify(5, notification.build());
+
+                                if (sucCount == progressMax) {
+                                    notification.setContentText("Upload finished")
+                                            .setProgress(0, 0, false)
+                                            .setOngoing(false);
+                                    notificationManager.notify(5, notification.build());
+                                }
+                            } else {
+                                Toast.makeText(UploadPhotosService.this, "something went wrong :( , try again", Toast.LENGTH_SHORT).show();
+                                stopSelf();
+                                notification.setContentText("upload failed")
+                                        .setProgress(0, 0, false)
+                                        .setOngoing(false);
+                                notificationManager.notify(5, notification.build());
+                            }
                         }
-                    }
+
+                    }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    FirebaseStorage.getInstance().getReference().child(FirebaseAuth.getInstance().getUid())
+                            .child(model.getRegisteredName()).child(photoName).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+
+                            listOfPics.add(uri.toString());
+                            Log.e(TAG, "onSuccess: " + uri );
+                            if (sucCount == progressMax) {
+                                Log.e(TAG, "onSuccess: "+ " de el log elly bt3ml upload :)" );
+                                FirebaseDatabase.getInstance().getReference().child("Users")
+                                        .child(FirebaseAuth.getInstance().getUid()).child("Hangouts")
+                                        .child(hangOutModel.getRegisteredName()).setValue(hangOutModel);
+                                stopSelf();
+                            }
+                        }
+                    });
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    stopSelf();
+                    notification.setContentText("Upload Failed")
+                            .setProgress(0, 0, false)
+                            .setOngoing(false);
+                    notificationManager.notify(5, notification.build());
                 }
             });
 
@@ -113,11 +155,20 @@ public class UploadPhotosService extends Service {
         }
 
 
+        hangOutModel.setRegisteredName(model.getRegisteredName());
+        hangOutModel.setUnixTime(model.getUnixTime());
+        hangOutModel.setDate(model.getDate());
+        hangOutModel.setListOfPics(listOfPics);
+        hangOutModel.setAddress(model.getAddress());
+        hangOutModel.setPlaceName(model.getPlaceName());
+        hangOutModel.setAlbumName(model.getAlbumName());
+
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        HangOutModel model = intent.getParcelableExtra("parcel");
+        ParcelableHangOutModel model = intent.getParcelableExtra("parcel");
         Log.e(TAG, "onStartCommand: " + model.getPlaceName());
         uploadParcelable(model);
 

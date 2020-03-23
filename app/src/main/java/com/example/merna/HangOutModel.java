@@ -1,86 +1,70 @@
 package com.example.merna;
 
 import android.net.Uri;
-import android.os.Parcel;
-import android.os.Parcelable;
 
 import java.util.List;
 
-public class HangOutModel implements Parcelable {
+public class HangOutModel {
+    private String AlbumName, address, placeName;
+    private List<String> listOfPics;
+    private String date;
+    private long unixTime;
+    private String registeredName;
 
-    private String AlbumName , address , placeName;
-    private List<Uri> listOfPics;
-
-    public HangOutModel(Parcel in) {
-        AlbumName = in.readString();
-        address = in.readString();
-        placeName = in.readString();
-        listOfPics = in.createTypedArrayList(Uri.CREATOR);
+    public void setRegisteredName(String registeredName) {
+        this.registeredName = registeredName;
     }
 
-
-
-    public HangOutModel(String albumName, String placeName, List<Uri> listOfPics) {
-        AlbumName = albumName;
-        this.placeName = placeName;
-        this.listOfPics = listOfPics;
+    public void setUnixTime(long unixTime) {
+        this.unixTime = unixTime;
     }
 
-    public static final Creator<HangOutModel> CREATOR = new Creator<HangOutModel>() {
-        @Override
-        public HangOutModel createFromParcel(Parcel in) {
-            return new HangOutModel(in);
-        }
-
-        @Override
-        public HangOutModel[] newArray(int size) {
-            return new HangOutModel[size];
-        }
-    };
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public void setAlbumName(String albumName) {
-        AlbumName = albumName;
-    }
-
-    public void setListOfPics(List<Uri> listOfPics) {
-        this.listOfPics = listOfPics;
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public void setPlaceName(String placeName) {
         this.placeName = placeName;
     }
 
-    public List<Uri> getListOfPics() {
-        return listOfPics;
+    public void setListOfPics(List<String> listOfPics) {
+        this.listOfPics = listOfPics;
     }
 
-    public String getAddress() {
-        return address;
+    public void setAlbumName(String albumName) {
+        AlbumName = albumName;
     }
 
-    public String getAlbumName() {
-        return AlbumName;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public String getPlaceName() {
         return placeName;
     }
 
-
-    @Override
-    public int describeContents() {
-        return 0;
+    public String getAlbumName() {
+        return AlbumName;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(AlbumName);
-        dest.writeString(address);
-        dest.writeString(placeName);
-        dest.writeTypedList(listOfPics);
+    public String getRegisteredName() {
+        return registeredName;
     }
+
+    public long getUnixTime() {
+        return unixTime;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public List<String> getListOfPics() {
+        return listOfPics;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
 }
