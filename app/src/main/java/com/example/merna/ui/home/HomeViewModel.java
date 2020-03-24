@@ -14,6 +14,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.merna.HangOutModel;
+import com.example.merna.ui.FirebaseQueryHelper;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -30,6 +32,7 @@ import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,13 +45,19 @@ public class HomeViewModel extends ViewModel implements OnMapReadyCallback {
 
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private static final String TAG = "HomeViewModel";
-    PlacesClient placesClient;
+    private PlacesClient placesClient;
+    private MutableLiveData<ArrayList<HangOutModel>> listOfHangOuts = new MutableLiveData<>();
+    private FirebaseQueryHelper queryHelper = FirebaseQueryHelper.getINSTANCE();
 
     public HomeViewModel() {
         mText = new MutableLiveData<>();
         mText.setValue("This is home fragment");
     }
 
+    public MutableLiveData<ArrayList<HangOutModel>> getListOfHangOuts(String uId) {
+        return queryHelper.getlistOfHangOuts(listOfHangOuts , uId);
+
+    }
 
     private void getCurrentDeviceLocation(Context context) {
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context);
@@ -75,7 +84,7 @@ public class HomeViewModel extends ViewModel implements OnMapReadyCallback {
 
     }
 
-     void getPlaces(Context context) {
+    void getPlaces(Context context) {
 
         placesClient = Places.createClient(context);
         // Use fields to define the data types to return.
@@ -118,5 +127,6 @@ public class HomeViewModel extends ViewModel implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
 
     }
+
 
 }
