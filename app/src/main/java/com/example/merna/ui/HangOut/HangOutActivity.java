@@ -1,14 +1,17 @@
 package com.example.merna.ui.HangOut;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -17,7 +20,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.asksira.bsimagepicker.BSImagePicker;
@@ -27,10 +33,22 @@ import com.example.merna.ParcelableHangOutModel;
 import com.example.merna.LocationService;
 import com.example.merna.R;
 import com.example.merna.UploadPhotosService;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
@@ -39,6 +57,9 @@ import com.google.android.libraries.places.api.model.PlaceLikelihood;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -57,23 +78,12 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 public class HangOutActivity extends AppCompatActivity implements BSImagePicker.OnSingleImageSelectedListener,
         BSImagePicker.OnMultiImageSelectedListener,
         BSImagePicker.ImageLoaderDelegate,
-        BSImagePicker.OnSelectImageCancelledListener, DatePickerDialog.OnDateSetListener {
+        BSImagePicker.OnSelectImageCancelledListener, DatePickerDialog.OnDateSetListener
+        , OnMapReadyCallback, ResultCallback<Status> {
 
 
     @BindView(R.id.pick_date)
     Button pickDate;
-
-    private void showDatePickerDialog() {
-        DatePickerDialog datePickerDialog = new DatePickerDialog(
-                this, this, Calendar.getInstance().get(Calendar.YEAR)
-                , Calendar.getInstance().get(Calendar.MONTH),
-                Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
-
-        datePickerDialog.show();
-
-    }
-
-
     private static final String TAG = "HangOutActivity";
     List<Uri> listOfPics;
     FusedLocationProviderClient fusedLocationProviderClient;
@@ -102,6 +112,18 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     String date;
 
 
+    private static final String FINE_LOCATION = ACCESS_FINE_LOCATION;
+    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    private static float DEFAULT_ZOOM = 17f;
+    private boolean mLocationPermission = false;
+    private GoogleMap mMap;
+    PlacesClient placesClient;
+    private CardView myCurrentLocationCardView;
+    //widgets
+    AutocompleteSupportFragment autocompleteFragment;
+    private LatLng myCurrentPosition;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,12 +131,15 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         ButterKnife.bind(this);
         getPlaces(this);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+
         pickDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showDatePickerDialog();
             }
         });
+
 
         addHourseFence.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -196,6 +221,38 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
             }
         });
 
+
+        placesClient = Places.createClient(this);
+
+        getCurrentLocation();
+
+
+        myCurrentLocationCardView = findViewById(R.id.my_current_location);
+        myCurrentLocationCardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Task<Location> location = fusedLocationProviderClient.getLastLocation();
+                location.addOnCompleteListener(new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        moveCamera(new LatLng(location.getResult().getLatitude(), location.getResult().getLongitude()), DEFAULT_ZOOM);
+
+                    }
+                });
+
+
+            }
+        });
+        // mSearchText = findViewById(R.id.input_search);
+
+        autocompleteFragment = (AutocompleteSupportFragment)
+                getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
+        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.NAME)).setCountries("eg")
+                .setHint("search place , city or zipcode");
+        getPermissionAccess();
+
+
     }
 
 
@@ -262,4 +319,229 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         date = dayOfMonth + "/" + month + "/" + year;
         Log.e(TAG, "onDateSet: " + date);
     }
+
+    private void showDatePickerDialog() {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                this, this, Calendar.getInstance().get(Calendar.YEAR)
+                , Calendar.getInstance().get(Calendar.MONTH),
+                Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
+
+        datePickerDialog.show();
+
+    }
+
+
+    private void getCurrentLocation() {
+
+        // Use fields to define the data types to return.
+        List<Place.Field> placeFields = Arrays.asList(Place.Field.NAME
+                , Place.Field.LAT_LNG
+                , Place.Field.ADDRESS
+                , Place.Field.TYPES);
+        // Use the builder to create a FindCurrentPlaceRequest.
+        FindCurrentPlaceRequest request = FindCurrentPlaceRequest.newInstance(placeFields);
+        // Call findCurrentPlace and handle the response (first check that the user has granted permission).
+        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
+            placeResponse.addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    StringBuilder sb = new StringBuilder();
+                    FindCurrentPlaceResponse response = task.getResult();
+                    double sum = 0;
+                    for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
+                        Log.e(TAG, String.format("Place '%s' has likelihood: %f",
+                                placeLikelihood.getPlace().getName(),
+                                placeLikelihood.getLikelihood()));
+                        sb.append(placeLikelihood.getPlace() + " " + placeLikelihood.getLikelihood() + "\n \n");
+                        Log.e(TAG, "getCurrentLocation: " + placeLikelihood.getPlace().getLatLng());
+                        sum = sum + placeLikelihood.getLikelihood();
+                        Log.e(TAG, "getCurrentLocation: " + sum);
+                    }
+
+                } else {
+                    Exception exception = task.getException();
+                    if (exception instanceof ApiException) {
+                        ApiException apiException = (ApiException) exception;
+                        Log.e(TAG, "Place not found: " + apiException.getStatusCode());
+                    }
+                }
+            });
+        } else {
+
+            // A local method to request required permissions;
+            // See https://developer.android.com/training/permissions/requesting
+        }
+
+    }
+
+    private void init() {
+
+        autocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(@NonNull Place place) {
+                // TODO: Get info about the selected place.
+                Log.e(TAG, "Place: " + place.getName() + ", " + place.getId());
+                geoLocate(place);
+            }
+
+            @Override
+            public void onError(@NonNull Status status) {
+                // TODO: Handle the error.
+                Log.e(TAG, "An error occurred: " + status);
+            }
+        });
+
+        hideSoftKeyboard();
+
+    }
+
+    private void geoLocate(Place place) {
+
+
+        Log.e(TAG, "geoLocate: " + place.getLatLng());
+        moveCamera(place.getLatLng(), DEFAULT_ZOOM, place.getName());
+        hideSoftKeyboard();
+
+    }
+
+    private void getDeviceLocation() {
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+        try {
+            if (mLocationPermission) {
+                final Task location = fusedLocationProviderClient.getLastLocation();
+                location.addOnCompleteListener(new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        if (task.isSuccessful()) {
+                            Location currentLocation = (Location) task.getResult();
+                            Log.e(TAG, "my current location NOWWW " + currentLocation);
+
+                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM);
+                        }
+                    }
+                });
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "getDeviceLocation: " + e.getMessage());
+        }
+
+
+    }
+
+    public void moveCamera(LatLng latLng, float zoom, String title) {
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        MarkerOptions markerOptions = new MarkerOptions().position(latLng).title(title);
+        mMap.addMarker(markerOptions);
+        hideSoftKeyboard();
+
+    }
+
+    public void moveCamera(LatLng latLng, float zoom) {
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
+        hideSoftKeyboard();
+
+    }
+
+
+    private void getPermissionAccess() {
+        String[] permission = {FINE_LOCATION, COARSE_LOCATION};
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this.getApplicationContext(), COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                mLocationPermission = true;
+                initMap();
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        permission,
+                        LOCATION_PERMISSION_REQUEST_CODE);
+
+            }
+
+
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    permission,
+                    LOCATION_PERMISSION_REQUEST_CODE);
+
+        }
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        mLocationPermission = false;
+        switch (requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE:
+                if (grantResults.length > 0) {
+                    for (int i = 0; i < grantResults.length; i++) {
+                        if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                            mLocationPermission = false;
+                            return;
+                        }
+
+                    }
+
+                    mLocationPermission = true;
+                    initMap();
+
+                }
+        }
+
+
+    }
+
+    private void initMap() {
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Log.e(TAG, "onMapReady: map is ready");
+        mMap = googleMap;
+        Toast.makeText(this, "Map Is Ready", Toast.LENGTH_SHORT).show();
+
+        if (mLocationPermission) {
+            getDeviceLocation();
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(false);
+
+            init();
+
+
+        }
+
+    }
+
+    private void hideSoftKeyboard() {
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+    }
+
+    @Override
+    public void onResult(@NonNull Status status) {
+        drawGeoFence();
+    }
+
+    Circle geoFenceLimits;
+
+    private void drawGeoFence() {
+        if (geoFenceLimits != null) {
+            geoFenceLimits.remove();
+        }
+
+        Location location = fusedLocationProviderClient.getLastLocation().getResult();
+        CircleOptions circleOptions = new CircleOptions()
+                .center(new LatLng(location.getLatitude(), location.getLongitude()))
+                .strokeColor(Color.argb(50, 70, 70, 70))
+                .fillColor(Color.argb(100, 150, 150, 150))
+                .radius(400f);
+
+
+        mMap.addCircle(circleOptions);
+
+    }
+
+
 }

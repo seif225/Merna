@@ -7,8 +7,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -19,6 +18,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.merna.AlbumsRecyclerView;
 import com.example.merna.HangOutModel;
@@ -36,13 +36,14 @@ import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 public class HomeFragment extends Fragment {
 
 
+
     private HomeViewModel homeViewModel;
     private FloatingActionButton fab;
     private static final String FINE_LOCATION = ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private AlbumsRecyclerView adapter;
-
+    private SwipeRefreshLayout srLayout;
     private RecyclerView homeRecyclerView;
     private ConstraintLayout homeConstraintLayout;
 
@@ -54,8 +55,15 @@ public class HomeFragment extends Fragment {
         fab = root.findViewById(R.id.fab);
         homeRecyclerView = root.findViewById(R.id.home_recyclerView);
         homeConstraintLayout = root.findViewById(R.id.home_constraint_layout);
+        srLayout = root.findViewById(R.id.swipe_refresh);
         callData();
-
+        srLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                callData();
+                srLayout.setRefreshing(false);
+            }
+        });
         getPermissionAccess();
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,12 +74,10 @@ public class HomeFragment extends Fragment {
             }
         });
 
-
         return root;
     }
 
     private void callData() {
-
         homeViewModel.getListOfHangOuts(FirebaseAuth.getInstance().getUid()).observe(this, new Observer<List<HangOutModel>>() {
             @Override
             public void onChanged(List<HangOutModel> hangOutModels) {
@@ -80,9 +86,7 @@ public class HomeFragment extends Fragment {
                     adapter = new AlbumsRecyclerView(hangOutModels);
                     homeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
                     homeRecyclerView.setAdapter(adapter);
-
                 }
-
             }
         });
 
