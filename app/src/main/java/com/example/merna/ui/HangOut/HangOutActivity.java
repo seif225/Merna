@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,13 +16,11 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.DatePicker;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
@@ -29,18 +29,15 @@ import androidx.core.content.ContextCompat;
 import com.asksira.bsimagepicker.BSImagePicker;
 import com.bumptech.glide.Glide;
 import com.example.merna.GeoSquare;
-import com.example.merna.ParcelableHangOutModel;
 import com.example.merna.LocationService;
+import com.example.merna.ParcelableHangOutModel;
 import com.example.merna.R;
 import com.example.merna.UploadPhotosService;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -57,7 +54,6 @@ import com.google.android.libraries.places.api.model.PlaceLikelihood;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest;
 import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
-import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.material.textfield.TextInputEditText;
@@ -65,9 +61,11 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import butterknife.BindView;
@@ -81,14 +79,31 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         BSImagePicker.OnSelectImageCancelledListener, DatePickerDialog.OnDateSetListener
         , OnMapReadyCallback, ResultCallback<Status> {
 
-
+    PlaceLikelihood location;
     @BindView(R.id.pick_date)
     Button pickDate;
     private static final String TAG = "HangOutActivity";
     List<Uri> listOfPics;
     FusedLocationProviderClient fusedLocationProviderClient;
-    @BindView(R.id.album_name_tv)
-    TextView albumNameTv;
+
+
+    String date;
+    MarkerOptions markerOptions = new MarkerOptions();
+
+
+    private static final String FINE_LOCATION = ACCESS_FINE_LOCATION;
+    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    private static float DEFAULT_ZOOM = 17f;
+
+    @BindView(R.id.my_current_location)
+    CardView myCurrentLocation;
+    @BindView(R.id.info)
+    CardView info;
+    @BindView(R.id.add_home_geoFence)
+    CardView addHomeGeoFence;
+    @BindView(R.id.blue_arrow)
+    ImageView blueArrow;
     @BindView(R.id.album_name_et)
     TextInputEditText albumNameEt;
     @BindView(R.id.album_name_et_container)
@@ -96,11 +111,11 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     @BindView(R.id.place_name_tv)
     TextView placeNameTv;
     @BindView(R.id.place_name_et)
-    EditText placeNameEt;
+    TextView placeNameEt;
     @BindView(R.id.address_tv)
     TextView addressTv;
     @BindView(R.id.address_et)
-    EditText addressEt;
+    TextView addressEt;
     @BindView(R.id.add_pics)
     Button addPics;
     @BindView(R.id.pick_location)
@@ -109,13 +124,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     Button done;
     @BindView(R.id.add_hourse_fence)
     Button addHourseFence;
-    String date;
 
-
-    private static final String FINE_LOCATION = ACCESS_FINE_LOCATION;
-    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
-    private static float DEFAULT_ZOOM = 17f;
     private boolean mLocationPermission = false;
     private GoogleMap mMap;
     PlacesClient placesClient;
@@ -129,7 +138,6 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hang_out);
         ButterKnife.bind(this);
-        getPlaces(this);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
 
@@ -248,7 +256,12 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
 
         autocompleteFragment = (AutocompleteSupportFragment)
                 getSupportFragmentManager().findFragmentById(R.id.autocomplete_fragment);
-        autocompleteFragment.setPlaceFields(Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.NAME)).setCountries("eg")
+        autocompleteFragment.setPlaceFields(Arrays.asList(
+                Place.Field.ID,
+                Place.Field.NAME,
+                Place.Field.LAT_LNG,
+                Place.Field.NAME))
+                .setCountries("eg")
                 .setHint("search place , city or zipcode");
         getPermissionAccess();
 
@@ -293,12 +306,19 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
             Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
             placeResponse.addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    PlaceLikelihood location = task.getResult().getPlaceLikelihoods().get(0);
+
+
+                    location = getMostLikelyPlace(task.getResult().getPlaceLikelihoods());
                     if (location.getPlace().getName() != null)
                         placeNameEt.setText(location.getPlace().getName());
                     if (location.getPlace().getAddress() != null)
                         addressEt.setText(location.getPlace().getAddress());
                     Log.e(TAG, "getPlaces: " + location.getPlace().getAddress());
+
+
+                    //  moveCamera(location.getPlace().getLatLng(), DEFAULT_ZOOM, location.getPlace().getName());
+
+
                 } else {
                     Exception exception = task.getException();
                     if (exception instanceof ApiException) {
@@ -312,6 +332,20 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
             // See https://developer.android.com/training/permissions/requesting
         }
 
+    }
+
+    private PlaceLikelihood getMostLikelyPlace(List<PlaceLikelihood> placeLikelihoods) {
+        PlaceLikelihood mostLikely = placeLikelihoods.get(0);
+
+        for (int i = 1; i < placeLikelihoods.size(); i++) {
+            if (mostLikely.getLikelihood() < placeLikelihoods.get(i).getLikelihood()) {
+                mostLikely = placeLikelihoods.get(i);
+            }
+
+        }
+
+
+        return mostLikely;
     }
 
     @Override
@@ -404,6 +438,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
 
     }
 
+
     private void getDeviceLocation() {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -431,7 +466,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
 
     public void moveCamera(LatLng latLng, float zoom, String title) {
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-        MarkerOptions markerOptions = new MarkerOptions().position(latLng).title(title);
+        markerOptions.position(latLng).title(title);
         mMap.addMarker(markerOptions);
         hideSoftKeyboard();
 
@@ -511,6 +546,32 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
 
 
         }
+
+        getPlaces(this);
+
+
+    }
+
+    private void markPlace(LatLng latLng) {
+
+        Geocoder geocoder;
+        List<Address> addresses;
+        geocoder = new Geocoder(this, Locale.getDefault());
+
+
+        try {
+            addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+            String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+            String city = addresses.get(0).getLocality();
+            String state = addresses.get(0).getAdminArea();
+            String country = addresses.get(0).getCountryName();
+            String postalCode = addresses.get(0).getPostalCode();
+            String knownName = addresses.get(0).getFeatureName();
+            moveCamera(latLng, DEFAULT_ZOOM, knownName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
 
