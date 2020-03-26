@@ -56,6 +56,7 @@ import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -68,6 +69,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import br.com.simplepass.loadingbutton.customViews.CircularProgressButton;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -78,17 +80,6 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         BSImagePicker.ImageLoaderDelegate,
         BSImagePicker.OnSelectImageCancelledListener, DatePickerDialog.OnDateSetListener
         , OnMapReadyCallback, ResultCallback<Status> {
-
-    PlaceLikelihood location;
-    @BindView(R.id.pick_date)
-    Button pickDate;
-    private static final String TAG = "HangOutActivity";
-    List<Uri> listOfPics;
-    FusedLocationProviderClient fusedLocationProviderClient;
-
-
-    String date;
-    MarkerOptions markerOptions = new MarkerOptions();
 
 
     private static final String FINE_LOCATION = ACCESS_FINE_LOCATION;
@@ -116,15 +107,18 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     TextView addressTv;
     @BindView(R.id.address_et)
     TextView addressEt;
-    @BindView(R.id.add_pics)
-    Button addPics;
-    @BindView(R.id.pick_location)
-    Button pickLocation;
-    @BindView(R.id.done)
-    Button done;
     @BindView(R.id.add_hourse_fence)
     Button addHourseFence;
+    @BindView(R.id.album_settings_tv)
+    TextView albumSettingsTv;
+    @BindView(R.id.add_pics)
+    FloatingActionButton addPics;
+    @BindView(R.id.pick_date)
+    FloatingActionButton pickDate;
+    @BindView(R.id.pick_location)
+    FloatingActionButton pickLocation;
 
+    CircularProgressButton done;
     private boolean mLocationPermission = false;
     private GoogleMap mMap;
     PlacesClient placesClient;
@@ -132,6 +126,12 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     //widgets
     AutocompleteSupportFragment autocompleteFragment;
     private LatLng myCurrentPosition;
+    PlaceLikelihood location;
+    private static final String TAG = "HangOutActivity";
+    List<Uri> listOfPics;
+    FusedLocationProviderClient fusedLocationProviderClient;
+    String date;
+    MarkerOptions markerOptions = new MarkerOptions();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,6 +139,14 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         setContentView(R.layout.activity_hang_out);
         ButterKnife.bind(this);
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+
+        done = (CircularProgressButton) findViewById(R.id.done);
+        pickLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getPlaces(getBaseContext());
+            }
+        });
 
 
         pickDate.setOnClickListener(new View.OnClickListener() {
@@ -203,9 +211,13 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                     } else if (placeNameEt.getText().toString().isEmpty()) {
                         placeNameEt.requestFocus();
                         placeNameEt.setError("you must insert an place name");
+                        Toast.makeText(HangOutActivity.this, "you need internet connection to upload the album and also to get the place"
+                                , Toast.LENGTH_LONG).show();
                     } else if (date == null) {
                         Toast.makeText(HangOutActivity.this, " you must pick a date", Toast.LENGTH_SHORT).show();
                     } else {
+                       // done.startAnimation();
+
                         Toast.makeText(HangOutActivity.this, "tmam", Toast.LENGTH_SHORT).show();
                         long unixTime = System.currentTimeMillis();
                         String registeredName = UUID.randomUUID().toString();
@@ -244,8 +256,15 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                 location.addOnCompleteListener(new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
+                      if(location.getResult()!=null){
                         moveCamera(new LatLng(location.getResult().getLatitude(), location.getResult().getLongitude()), DEFAULT_ZOOM);
-
+                    }
+                      else {
+                          Toast.makeText(HangOutActivity.this
+                                  , "error occurred while attempting to access your location , check your internet connection or permissions"
+                                  , Toast.LENGTH_SHORT)
+                                  .show();
+                      }
                     }
                 });
 
@@ -416,6 +435,8 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                 // TODO: Get info about the selected place.
                 Log.e(TAG, "Place: " + place.getName() + ", " + place.getId());
                 geoLocate(place);
+                placeNameEt.setText(place.getName() + "");
+                addressEt.setText(place.getAddress() + "");
             }
 
             @Override
@@ -450,9 +471,19 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                     public void onComplete(@NonNull Task task) {
                         if (task.isSuccessful()) {
                             Location currentLocation = (Location) task.getResult();
-                            Log.e(TAG, "my current location NOWWW " + currentLocation);
 
-                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM);
+                            if (currentLocation != null) {
+                                Log.e(TAG, "my current location NOWWW " + currentLocation);
+                                moveCamera(
+                                        new LatLng(currentLocation.getLatitude()
+                                                , currentLocation.getLongitude())
+                                        , DEFAULT_ZOOM);
+                            } else {
+                                Toast.makeText(HangOutActivity.this
+                                        , "error occurred while attempting to access your location , check your internet connection or permissions"
+                                        , Toast.LENGTH_SHORT)
+                                        .show();
+                            }
                         }
                     }
                 });

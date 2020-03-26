@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     style="@style/loginCard"
-    app:cardCornerRadius="8dp"
-    android:elevation="5dp"
     android:layout_gravity="center"
     android:layout_marginTop="8dp"
     android:layout_marginBottom="8dp"
-    android:background="#fefefe">
+    android:background="#fefefe"
+    android:elevation="5dp"
+    app:cardCornerRadius="8dp">
 
     <LinearLayout
         style="@style/linearParent"
@@ -17,58 +16,63 @@
 
         <TextView
             style="@style/headerTextPrimary"
-            android:text="Login"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:text="Login" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputEmail"
             style="@style/parent"
             android:layout_marginTop="8dp">
+
             <EditText
                 android:id="@+id/mail_et"
                 style="@style/modifiedEditText"
+                android:hint="mail"
                 android:inputType="textEmailAddress"
-                android:maxLines="1"
-                android:hint="mail"/>
+                android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputPassword"
             style="@style/parent"
             android:layout_marginTop="8dp">
+
             <EditText
                 android:id="@+id/password_et"
                 style="@style/modifiedEditText"
                 android:hint="password"
-                android:maxLines="1"
-                android:inputType="textPassword"/>
+                android:inputType="textPassword"
+                android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
             style="@style/viewParent"
+            android:layout_gravity="end"
+            android:layout_marginTop="10dp"
+            android:onClick="viewForgotPAssword"
             android:text="Forgot Password?"
             android:textColor="#000000"
-            android:textSize="14sp"
-            android:layout_gravity="end"
-            android:onClick="viewForgotPAssword"
-            android:layout_marginTop="10dp"/>
+            android:textSize="14sp" />
 
-        <Button
+        <br.com.simplepass.loadingbutton.customViews.CircularProgressButton
             android:id="@+id/cirLoginButton"
             style="@style/loginButton"
-            android:text="Login"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="8dp"
+            android:text="Login"
+            app:spinning_bar_color="#FFF"
+            app:spinning_bar_padding="6dp"
+            app:spinning_bar_width="4dp" />
 
         <TextView
-            style="@style/parent"
-            android:textAlignment="center"
-            android:textStyle="bold"
-            android:textColor="#000000"
             android:id="@+id/no_account"
-            android:text="don't have an account ?"
+            style="@style/parent"
+            android:layout_marginTop="8dp"
             android:onClick="viewRegisterClicked"
-            android:layout_marginTop="8dp"/>
+            android:text="don't have an account ?"
+            android:textAlignment="center"
+            android:textColor="#000000"
+            android:textStyle="bold" />
 
 
     </LinearLayout>

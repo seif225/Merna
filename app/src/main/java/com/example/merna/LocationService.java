@@ -77,27 +77,36 @@ public class LocationService extends Service {
         notificationManager = NotificationManagerCompat.from(this);
         createNotificationChannel();
         createNotificationChannelForPlaces();
-        FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getUid())
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.hasChild("houseFence")) {
-                            Log.e(TAG, "onDataChange: " + "got house fence in service ");
-                            houseFence = dataSnapshot.child("houseFence").getValue(GeoSquare.class);
-                            Log.e(TAG, "onDataChange: " + houseFence.getNorthEastLat());
-                        } else {
-                            Log.e(TAG, "onDataChange: " + "didn't get a house fence");
 
-                            Toast.makeText(LocationService.this, "you need to add your house fence first ^^ ", Toast.LENGTH_SHORT).show();
-                            stopSelf();
+
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getUid())
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChild("houseFence")) {
+                                Log.e(TAG, "onDataChange: " + "got house fence in service ");
+                                houseFence = dataSnapshot.child("houseFence").getValue(GeoSquare.class);
+                                Log.e(TAG, "onDataChange: " + houseFence.getNorthEastLat());
+                            } else {
+                                Log.e(TAG, "onDataChange: " + "didn't get a house fence");
+
+                                Toast.makeText(LocationService.this, "you need to add your house fence first ^^ ", Toast.LENGTH_SHORT).show();
+                                stopSelf();
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
+                        }
+                    });
+
+
+
+
+        }
+
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,
