@@ -45,6 +45,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -107,8 +108,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     TextView addressTv;
     @BindView(R.id.address_et)
     TextView addressEt;
-    @BindView(R.id.add_hourse_fence)
-    Button addHourseFence;
+
     @BindView(R.id.album_settings_tv)
     TextView albumSettingsTv;
     @BindView(R.id.add_pics)
@@ -138,6 +138,8 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hang_out);
         ButterKnife.bind(this);
+        getSupportActionBar().hide();
+
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         done = (CircularProgressButton) findViewById(R.id.done);
@@ -157,27 +159,6 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         });
 
 
-        addHourseFence.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-
-                Task<Location> task = fusedLocationProviderClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            GeoSquare geoSquare = new GeoSquare(new LatLng(task.getResult().getLatitude(), task.getResult().getLongitude()));
-                            FirebaseDatabase.getInstance().getReference().child("Users").
-                                    child(FirebaseAuth.getInstance().getUid()).child("houseFence").setValue(geoSquare);
-                            Toast.makeText(HangOutActivity.this, "house fence has been added successfully", Toast.LENGTH_SHORT).show();
-                            Intent serviceIntent = new Intent(HangOutActivity.this, LocationService.class);
-                            ContextCompat.startForegroundService(HangOutActivity.this, serviceIntent);
-                        }
-                    }
-                });
-
-            }
-        });
 
 
         addPics.setOnClickListener(new View.OnClickListener() {
@@ -197,6 +178,8 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                     HangOutActivity.this.onMultiImageSelected(listOfPics, "");
                 }
                 multiSelectionPicker.show(getSupportFragmentManager(), "picker");
+
+
             }
         });
 
@@ -566,6 +549,12 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     public void onMapReady(GoogleMap googleMap) {
         Log.e(TAG, "onMapReady: map is ready");
         mMap = googleMap;
+
+        boolean success = googleMap.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(this , R.raw.map_style ));
+
+
+
         Toast.makeText(this, "Map Is Ready", Toast.LENGTH_SHORT).show();
 
         if (mLocationPermission) {
