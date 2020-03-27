@@ -97,5 +97,7 @@ dependencies {
     //this dependency for the place picker ! ---- > *IMPORTANT*
     implementation 'com.google.android.gms:play-services-places:17.0.0'
     implementation 'br.com.simplepass:loading-button-android:2.2.0'
+    implementation 'com.google.maps.android:android-maps-utils:1.0.2'
+
 
 }

@@ -48,7 +48,7 @@
                     style="@style/headerText"
                     android:layout_gravity="center"
                     android:layout_marginTop="40dp"
-                    android:text="my app ^^" />
+                    android:text="" />
 
                 <include layout="@layout/layout_register" />
             </LinearLayout>

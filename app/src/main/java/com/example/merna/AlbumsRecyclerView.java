@@ -11,6 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;
@@ -40,7 +42,7 @@ public class AlbumsRecyclerView extends RecyclerView.Adapter<AlbumsRecyclerView.
 
         if (position == 0) {
             float scale = holder.itemView.getResources().getDisplayMetrics().density;
-            int dpAsPixels = (int) (12*scale + 0.5f);
+            int dpAsPixels = (int) (12 * scale + 0.5f);
             holder.pictureCard.setPadding(0, dpAsPixels, 0, 0);
             holder.itemView.setPadding(0, dpAsPixels, 0, 0);
 
@@ -54,7 +56,22 @@ public class AlbumsRecyclerView extends RecyclerView.Adapter<AlbumsRecyclerView.
                 .load(model.getListOfPics().get(0))
                 .fit()
                 .centerCrop(Gravity.TOP)
-                .into(holder.picture);
+                .networkPolicy(NetworkPolicy.OFFLINE)
+                .into(holder.picture, new Callback() {
+                    @Override
+                    public void onSuccess() {
+
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Picasso.get()
+                                .load(model.getListOfPics().get(0))
+                                .fit()
+                                .centerCrop(Gravity.TOP)
+                                .into(holder.picture);
+                    }
+                });
 
     }
 
@@ -74,7 +91,7 @@ public class AlbumsRecyclerView extends RecyclerView.Adapter<AlbumsRecyclerView.
             albumTitle = itemView.findViewById(R.id.name_tv);
             place = itemView.findViewById(R.id.place_tv);
             date = itemView.findViewById(R.id.date_tv);
-            pictureCard = itemView.findViewById(R.id.card_1) ;
+            pictureCard = itemView.findViewById(R.id.card_1);
         }
     }
 }

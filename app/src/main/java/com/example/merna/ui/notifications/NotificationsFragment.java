@@ -14,22 +14,28 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.merna.GeoSquare;
 import com.example.merna.LocationService;
 import com.example.merna.LoginActivity;
 import com.example.merna.R;
+import com.example.merna.VisitedPlacesActivity;
 import com.example.merna.ui.HangOut.HangOutActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
+import com.squareup.picasso.Picasso;
+import com.theartofdev.edmodo.cropper.CropImage;
 
 import butterknife.BindView;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class NotificationsFragment extends Fragment {
 
@@ -41,6 +47,8 @@ public class NotificationsFragment extends Fragment {
     LinearLayout logOutLinearLayout;
     NotificationsViewModel notificationsViewModel;
     FusedLocationProviderClient fusedLocationProviderClient;
+    CircleImageView userImageView;
+    FloatingActionButton uploadImageFab;
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -48,13 +56,36 @@ public class NotificationsFragment extends Fragment {
         notificationsViewModel =
                 ViewModelProviders.of(this).get(NotificationsViewModel.class);
         View root = inflater.inflate(R.layout.fragment_notifications, container, false);
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
+
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
         userNameTv = root.findViewById(R.id.user_name_tv);
+        userImageView = root.findViewById(R.id.user_profile_picture);
+        uploadImageFab = root.findViewById(R.id.upload_picture_fab);
         imageView = root.findViewById(R.id.imageView);
         houseFenceLinearLayout = root.findViewById(R.id.house_fence_linear_layout);
         visitedPlacesLinearLayout = root.findViewById(R.id.visited_places_linear_layout);
         logOutLinearLayout = root.findViewById(R.id.log_out_linearLayout);
+
+        notificationsViewModel.getUserPicture(FirebaseAuth.getInstance().getUid()).observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                if(s!=null ) Picasso.get().load(s).into(userImageView);
+            }
+        });
+
+
+        uploadImageFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                CropImage.activity().start(getActivity());
+
+
+            }
+        });
+
 
         logOutLinearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,6 +100,24 @@ public class NotificationsFragment extends Fragment {
                 addHouseFence();
             }
         });
+
+        visitedPlacesLinearLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getActivity() , VisitedPlacesActivity.class);
+                startActivity(i);
+            }
+        });
+
+        notificationsViewModel.getUserName(FirebaseAuth.getInstance().getUid()).observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                if(s!=null) userNameTv.setText(s);
+            }
+        });
+
+
+
 
         return root;
     }

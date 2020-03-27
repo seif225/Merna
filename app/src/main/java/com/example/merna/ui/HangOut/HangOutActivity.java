@@ -108,7 +108,6 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     TextView addressTv;
     @BindView(R.id.address_et)
     TextView addressEt;
-
     @BindView(R.id.album_settings_tv)
     TextView albumSettingsTv;
     @BindView(R.id.add_pics)
@@ -132,6 +131,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
     FusedLocationProviderClient fusedLocationProviderClient;
     String date;
     MarkerOptions markerOptions = new MarkerOptions();
+    LatLng choosenLatlng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +143,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
         done = (CircularProgressButton) findViewById(R.id.done);
+
         pickLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -157,8 +158,6 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                 showDatePickerDialog();
             }
         });
-
-
 
 
         addPics.setOnClickListener(new View.OnClickListener() {
@@ -199,7 +198,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                     } else if (date == null) {
                         Toast.makeText(HangOutActivity.this, " you must pick a date", Toast.LENGTH_SHORT).show();
                     } else {
-                       // done.startAnimation();
+                        // done.startAnimation();
 
                         Toast.makeText(HangOutActivity.this, "tmam", Toast.LENGTH_SHORT).show();
                         long unixTime = System.currentTimeMillis();
@@ -208,7 +207,8 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
 
                         ParcelableHangOutModel model = new ParcelableHangOutModel(
                                 albumNameEt.getText().toString(), addressEt.getText().toString(), placeNameEt.getText().toString(),
-                                listOfPics, date, unixTime, registeredName);
+                                listOfPics, date, unixTime, registeredName
+                                , choosenLatlng.latitude + "", choosenLatlng.longitude + "");
                         Intent intent = new Intent(getBaseContext(), UploadPhotosService.class);
                         intent.putExtra("parcel", model);
                         ContextCompat.startForegroundService(getBaseContext(), intent);
@@ -239,15 +239,14 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                 location.addOnCompleteListener(new OnCompleteListener<Location>() {
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
-                      if(location.getResult()!=null){
-                        moveCamera(new LatLng(location.getResult().getLatitude(), location.getResult().getLongitude()), DEFAULT_ZOOM);
-                    }
-                      else {
-                          Toast.makeText(HangOutActivity.this
-                                  , "error occurred while attempting to access your location , check your internet connection or permissions"
-                                  , Toast.LENGTH_SHORT)
-                                  .show();
-                      }
+                        if (location.getResult() != null) {
+                            moveCamera(new LatLng(location.getResult().getLatitude(), location.getResult().getLongitude()), DEFAULT_ZOOM);
+                        } else {
+                            Toast.makeText(HangOutActivity.this
+                                    , "error occurred while attempting to access your location , check your internet connection or permissions"
+                                    , Toast.LENGTH_SHORT)
+                                    .show();
+                        }
                     }
                 });
 
@@ -316,7 +315,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                     if (location.getPlace().getAddress() != null)
                         addressEt.setText(location.getPlace().getAddress());
                     Log.e(TAG, "getPlaces: " + location.getPlace().getAddress());
-
+                    choosenLatlng = location.getPlace().getLatLng();
 
                     //  moveCamera(location.getPlace().getLatLng(), DEFAULT_ZOOM, location.getPlace().getName());
 
@@ -392,6 +391,8 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                         Log.e(TAG, "getCurrentLocation: " + placeLikelihood.getPlace().getLatLng());
                         sum = sum + placeLikelihood.getLikelihood();
                         Log.e(TAG, "getCurrentLocation: " + sum);
+
+
                     }
 
                 } else {
@@ -420,6 +421,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
                 geoLocate(place);
                 placeNameEt.setText(place.getName() + "");
                 addressEt.setText(place.getAddress() + "");
+                choosenLatlng = place.getLatLng();
             }
 
             @Override
@@ -551,8 +553,7 @@ public class HangOutActivity extends AppCompatActivity implements BSImagePicker.
         mMap = googleMap;
 
         boolean success = googleMap.setMapStyle(
-                MapStyleOptions.loadRawResourceStyle(this , R.raw.map_style ));
-
+                MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
 
 
         Toast.makeText(this, "Map Is Ready", Toast.LENGTH_SHORT).show();

@@ -4,23 +4,27 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 
+import br.com.simplepass.loadingbutton.customViews.CircularProgressButton;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class RegisterActivity extends AppCompatActivity {
 
+
+    private static final String TAG = "RegisterActivity";
     @BindView(R.id.name_et)
     EditText nameEt;
     @BindView(R.id.phone_et)
@@ -30,14 +34,15 @@ public class RegisterActivity extends AppCompatActivity {
     @BindView(R.id.password_et)
     EditText passwordEt;
     @BindView(R.id.register_button)
-    Button registerButton;
-    private static final String TAG = "RegisterActivity";
+    CircularProgressButton registerButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
         ButterKnife.bind(this);
+        getSupportActionBar().hide();
+
         registerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -46,29 +51,26 @@ public class RegisterActivity extends AppCompatActivity {
                 String email = mailEt.getText().toString();
                 String password = passwordEt.getText().toString();
 
-                if (name.isEmpty()){
+                if (name.isEmpty()) {
                     nameEt.requestFocus();
                     nameEt.setError("you must choose a name");
-                }
-                else if (phone.isEmpty()){
+                } else if (phone.isEmpty()) {
                     phoneEt.requestFocus();
                     phoneEt.setError("you must insert yout phone number");
-                }
-                else if (email.isEmpty()){
+                } else if (email.isEmpty()) {
                     mailEt.requestFocus();
                     mailEt.setError("you must insert your email");
-                }
-                else if (password.isEmpty()){
+                } else if (password.isEmpty()) {
                     passwordEt.requestFocus();
                     passwordEt.setError("you must add a password");
-                }
-                    else{
-                    Log.e(TAG, "onClick: "+ email + " " + password );
+                } else {
+                    registerButton.startAnimation();
+                    Log.e(TAG, "onClick: " + email + " " + password);
                     UserRegisterModel model = new UserRegisterModel();
-                        model.setEmail(email);
-                        model.setPassword(password);
-                        model.setPhone(phone);
-                        model.setName(name);
+                    model.setEmail(email);
+                    model.setPassword(password);
+                    model.setPhone(phone);
+                    model.setName(name);
                     registerUser(model);
                 }
 
@@ -84,10 +86,17 @@ public class RegisterActivity extends AppCompatActivity {
                 .createUserWithEmailAndPassword(model.getEmail(), model.getPassword()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()){
+                if (task.isSuccessful()) {
                     uploadUserData(model);
-
+                    registerButton.getDrawableBackground();
                 }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                registerButton.revertAnimation();
+                registerButton.getDrawableBackground();
+                Toast.makeText(RegisterActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -99,17 +108,17 @@ public class RegisterActivity extends AppCompatActivity {
         FirebaseDatabase.getInstance().getReference().child("Users").child(FirebaseAuth.getInstance().getUid()).setValue(model).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
-            if(task.isSuccessful()){
-                sendUserToMainActivity();
-            }
+                if (task.isSuccessful()) {
+                    sendUserToMainActivity();
+                }
             }
         });
 
     }
 
     private void sendUserToMainActivity() {
-        Intent i = new Intent(this,MainActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent i = new Intent(this, MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(i);
 
     }

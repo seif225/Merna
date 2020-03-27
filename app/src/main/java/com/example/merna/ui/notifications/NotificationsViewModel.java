@@ -4,16 +4,23 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.example.merna.ui.FirebaseQueryHelper;
+
 public class NotificationsViewModel extends ViewModel {
 
-    private MutableLiveData<String> mText;
+    FirebaseQueryHelper firebaseQueryHelper = FirebaseQueryHelper.getINSTANCE();
+    MutableLiveData<String> userName = new MutableLiveData<>();
+    MutableLiveData<String> userPicture = new MutableLiveData<>();
 
     public NotificationsViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is notifications fragment");
+
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public MutableLiveData<String> getUserName(String id ) {
+        return firebaseQueryHelper.getUserName(id , userName);
+    }
+
+    public MutableLiveData<String> getUserPicture(String id) {
+        return firebaseQueryHelper.getUserPicture(id , userPicture);
     }
 }

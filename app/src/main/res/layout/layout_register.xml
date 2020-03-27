@@ -27,6 +27,7 @@
                 style="@style/modifiedEditText"
                 android:inputType="text"
                 android:maxLines="1"
+                android:textSize="14sp"
                 android:id="@+id/name_et"
                 android:hint="Name"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -38,6 +39,8 @@
                 style="@style/modifiedEditText"
                 android:inputType="number"
                 android:maxLines="1"
+                android:textSize="14sp"
+
                 android:id="@+id/phone_et"
                 android:hint="Mobile Number"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -49,6 +52,8 @@
                 style="@style/modifiedEditText"
                 android:inputType="textEmailAddress"
                 android:maxLines="1"
+                android:textSize="14sp"
+
                 android:id="@+id/mail_et"
                 android:hint="mail"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -60,15 +65,21 @@
                 style="@style/modifiedEditText"
                 android:hint="password"
                 android:maxLines="1"
+                android:textSize="14sp"
+
                 android:id="@+id/password_et"
                 android:inputType="textPassword"/>
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
+        <br.com.simplepass.loadingbutton.customViews.CircularProgressButton
             style="@style/loginButton"
             android:id="@+id/register_button"
             android:layout_gravity="center"
-            android:text="Register" />
+            android:text="Register"
+            app:spinning_bar_color="#FFF"
+            app:spinning_bar_padding="6dp"
+            app:spinning_bar_width="4dp"
+            />
 
         <TextView
             style="@style/parent"

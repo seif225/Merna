@@ -162,6 +162,8 @@ public class UploadPhotosService extends Service {
         hangOutModel.setAddress(model.getAddress());
         hangOutModel.setPlaceName(model.getPlaceName());
         hangOutModel.setAlbumName(model.getAlbumName());
+        hangOutModel.setLatitude(model.getLatitude());
+        hangOutModel.setLongitude(model.getLongitude());
 
 
     }

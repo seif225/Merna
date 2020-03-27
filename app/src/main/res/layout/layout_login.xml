@@ -28,6 +28,8 @@
                 android:id="@+id/mail_et"
                 style="@style/modifiedEditText"
                 android:hint="mail"
+                android:textSize="14sp"
+
                 android:inputType="textEmailAddress"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
@@ -42,6 +44,7 @@
                 style="@style/modifiedEditText"
                 android:hint="password"
                 android:inputType="textPassword"
+                android:textSize="14sp"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 

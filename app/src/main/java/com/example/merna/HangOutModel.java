@@ -10,6 +10,24 @@ public class HangOutModel {
     private String date;
     private long unixTime;
     private String registeredName;
+    private String latitude , longitude;
+
+
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getLongitude() {
+        return longitude;
+    }
+
+    public String getLatitude() {
+        return latitude;
+    }
 
     public void setRegisteredName(String registeredName) {
         this.registeredName = registeredName;
