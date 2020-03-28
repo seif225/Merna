@@ -23,6 +23,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.maps.android.clustering.ClusterItem;
@@ -72,11 +73,16 @@ public class VisitedPlacesActivity extends AppCompatActivity implements OnMapRea
             @Override
             public void onComplete(@NonNull Task<Location> task) {
 
-                moveCamera(new LatLng(task.getResult().getLatitude(), task.getResult().getLongitude()), 7f);
-
 
             }
+        }).addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                moveCamera(new LatLng(location.getLatitude(), location.getLongitude()), 7f);
+            }
         });
+
+
         viewModel.getListOfHangOuts(FirebaseAuth.getInstance().getUid()).observe(this, new Observer<ArrayList<HangOutModel>>() {
             @Override
             public void onChanged(ArrayList<HangOutModel> hangOutModels) {

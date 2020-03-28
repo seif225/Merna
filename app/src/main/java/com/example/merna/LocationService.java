@@ -61,8 +61,8 @@ import static com.example.merna.App.CHANNEL_ID;
 
 public class LocationService extends Service {
     private static final String TAG = "LocationService";
-    private final static long UPDATE_INTERVAL = 60 * 1000;  /* 15 hours  */
-    private final static long FASTEST_INTERVAL = 55 * 1000; /* 10 hours */
+    private final static long UPDATE_INTERVAL = 5 * 1000;  /* 15 hours  */
+    private final static long FASTEST_INTERVAL = 5* 1000; /* 10 hours */
     private static final String CHANNEL_ID_PLACES = "10";
     private FusedLocationProviderClient mFusedLocationClient;
     private boolean[] checks = new boolean[15];
